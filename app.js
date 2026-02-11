@@ -228,13 +228,20 @@
   }
 
   function generateUserAgent() {
+    var v = function (min, max) { return randomInt(max - min + 1) + min; };
     var browsers = [
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + (randomInt(30) + 100) + '.0.' + randomInt(9999) + '.' + randomInt(999) + ' Safari/537.36',
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_' + (randomInt(6) + 13) + '_' + randomInt(8) + ') AppleWebKit/605.1.15 (KHTML, like Gecko) Version/' + (randomInt(5) + 14) + '.' + randomInt(5) + ' Safari/605.1.15',
-      'Mozilla/5.0 (X11; Linux x86_64; rv:' + (randomInt(30) + 100) + '.0) Gecko/20100101 Firefox/' + (randomInt(30) + 100) + '.0',
-      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:' + (randomInt(30) + 100) + '.0) Gecko/20100101 Firefox/' + (randomInt(30) + 100) + '.0'
+      function () { return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + v(100, 130) + '.0.' + randomInt(9999) + '.' + randomInt(999) + ' Safari/537.36'; },
+      function () { return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_' + v(13, 18) + '_' + v(0, 6) + ') AppleWebKit/605.1.15 (KHTML, like Gecko) Version/' + v(14, 18) + '.' + randomInt(5) + ' Safari/605.1.15'; },
+      function () { return 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + v(100, 130) + '.0.' + randomInt(9999) + '.' + randomInt(999) + ' Safari/537.36'; },
+      function () { return 'Mozilla/5.0 (X11; Linux x86_64; rv:' + v(100, 130) + '.0) Gecko/20100101 Firefox/' + v(100, 130) + '.0'; },
+      function () { return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:' + v(100, 130) + '.0) Gecko/20100101 Firefox/' + v(100, 130) + '.0'; },
+      function () { return 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + v(100, 130) + '.0.0.0 Safari/537.36 Edg/' + v(100, 130) + '.0.0.0'; },
+      function () { return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + v(100, 130) + '.0.' + randomInt(9999) + ' Safari/537.36 OPR/' + v(85, 115) + '.0.0'; },
+      function () { return 'Mozilla/5.0 (iPhone; CPU iPhone OS ' + v(14, 18) + '_' + randomInt(5) + ' like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/' + v(14, 18) + '.' + randomInt(2) + ' Mobile/15E148 Safari/604.1'; },
+      function () { return 'Mozilla/5.0 (Linux; Android ' + v(10, 14) + '; SM-' + v(900, 999) + ') AppleWebKit/537.36 (KHTML, like Gecko) Chrome/' + v(100, 130) + '.0.' + randomInt(9999) + ' Mobile Safari/537.36'; },
+      function () { return 'Mozilla/5.0 (iPad; CPU OS ' + v(14, 18) + '_' + randomInt(5) + ' like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/' + v(14, 18) + ' Mobile/15E148 Safari/604.1'; }
     ];
-    return browsers[randomInt(browsers.length)];
+    return browsers[randomInt(browsers.length)]();
   }
 
   function generateCreditCard() {
@@ -256,6 +263,14 @@
     return str.slice(0, 4) + ' ' + str.slice(4, 8) + ' ' + str.slice(8, 12) + ' ' + str.slice(12);
   }
 
+  function mod97(numericStr) {
+    var remainder = 0;
+    for (var i = 0; i < numericStr.length; i++) {
+      remainder = (remainder * 10 + parseInt(numericStr[i], 10)) % 97;
+    }
+    return remainder;
+  }
+
   function generateIBAN() {
     var countries = [
       { code: 'FR', len: 27 },
@@ -265,55 +280,67 @@
       { code: 'IT', len: 27 }
     ];
     var c = countries[randomInt(countries.length)];
-    var check = (randomInt(90) + 10).toString();
     var bban = '';
     for (var i = 0; i < c.len - 4; i++) {
       bban += randomInt(10).toString();
     }
+    var rearranged = bban + c.code + '00';
+    var numericStr = '';
+    for (var j = 0; j < rearranged.length; j++) {
+      var ch = rearranged[j];
+      numericStr += /[A-Z]/.test(ch) ? (ch.charCodeAt(0) - 55).toString() : ch;
+    }
+    var check = (98 - mod97(numericStr)).toString().padStart(2, '0');
     var iban = c.code + check + bban;
     var result = '';
-    for (var j = 0; j < iban.length; j += 4) {
-      result += (j > 0 ? ' ' : '') + iban.slice(j, j + 4);
+    for (var k = 0; k < iban.length; k += 4) {
+      result += (k > 0 ? ' ' : '') + iban.slice(k, k + 4);
     }
     return result;
   }
 
   function generatePhone() {
+    var v = function (min, max) { return randomInt(max - min + 1) + min; };
     var formats = [
-      function () {
-        return '+1 (' + (randomInt(800) + 200) + ') ' + (randomInt(900) + 100) + '-' + (randomInt(9000) + 1000);
-      },
-      function () {
-        return '+44 ' + (randomInt(900) + 100) + ' ' + (randomInt(9000) + 1000) + ' ' + (randomInt(9000) + 1000);
-      },
-      function () {
-        return '+33 ' + randomInt(10) + ' ' + (randomInt(90) + 10) + ' ' + (randomInt(90) + 10) + ' ' + (randomInt(90) + 10) + ' ' + (randomInt(90) + 10);
-      },
-      function () {
-        return '+49 ' + (randomInt(900) + 100) + ' ' + (randomInt(90000000) + 10000000);
-      }
+      function () { return '+1 (' + v(200, 999) + ') ' + v(200, 999) + '-' + v(1000, 9999); },
+      function () { return '+44 ' + v(100, 999) + ' ' + v(1000, 9999) + ' ' + v(1000, 9999); },
+      function () { return '+33 ' + v(1, 9) + ' ' + v(10, 99) + ' ' + v(10, 99) + ' ' + v(10, 99) + ' ' + v(10, 99); },
+      function () { return '+49 ' + v(100, 999) + ' ' + v(10000000, 99999999); },
+      function () { return '+34 ' + v(600, 799) + ' ' + v(100000, 999999); },
+      function () { return '+39 ' + v(300, 399) + ' ' + v(1000000, 9999999); },
+      function () { return '+61 ' + v(400, 499) + ' ' + v(100000, 999999); },
+      function () { return '+81 ' + v(10, 99) + '-' + v(1000, 9999) + '-' + v(1000, 9999); },
+      function () { return '+86 ' + v(130, 199) + ' ' + v(1000, 9999) + ' ' + v(1000, 9999); },
+      function () { return '+55 ' + v(11, 99) + ' ' + v(90000, 99999) + '-' + v(1000, 9999); },
+      function () { return '+7 ' + v(900, 999) + ' ' + v(100, 999) + '-' + v(10, 99) + '-' + v(10, 99); },
+      function () { return '+31 ' + v(6, 9) + v(1000000, 9999999); },
+      function () { return '+41 ' + v(70, 79) + ' ' + v(1000000, 9999999); },
+      function () { return '+32 ' + v(400, 499) + ' ' + v(100000, 999999); },
+      function () { return '+48 ' + v(500, 799) + ' ' + v(100000, 999999); }
     ];
     return formats[randomInt(formats.length)]();
   }
 
   function generateEmail() {
-    var names = ['alice', 'bob', 'charlie', 'dave', 'emma', 'frank', 'grace', 'henry', 'iris', 'jack',
-      'kate', 'leo', 'mia', 'noah', 'olivia', 'paul', 'quinn', 'ruby', 'sam', 'tara'];
-    var domains = ['example.com', 'test.org', 'demo.net', 'sample.io', 'mail.dev', 'acme.co', 'corp.biz'];
-    var sep = ['', '.', '_'][randomInt(3)];
-    var num = randomInt(2) === 0 ? '' : randomInt(999).toString();
-    return names[randomInt(names.length)] + sep + names[randomInt(names.length)] + num + '@' + domains[randomInt(domains.length)];
+    var locals = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    var len = randomInt(7) + 6;
+    var local = '';
+    for (var i = 0; i < len; i++) local += locals[randomInt(locals.length)];
+    var tlds = ['com', 'net', 'org', 'io', 'dev', 'co', 'biz', 'info', 'app', 'xyz', 'tech', 'me', 'tv'];
+    var domainLen = randomInt(6) + 4;
+    var domain = '';
+    for (var j = 0; j < domainLen; j++) domain += locals[randomInt(locals.length)];
+    return local + '@' + domain + '.' + tlds[randomInt(tlds.length)];
   }
 
   function generateAddress() {
-    var streets = ['Main', 'Oak', 'Maple', 'Cedar', 'Park', 'High', 'Church', 'Market', 'River', 'Hill',
-      'Lake', 'Forest', 'Spring', 'Washington', 'Lincoln', 'Jefferson', 'Rue de la Paix', 'Avenue des Champs'];
-    var types = ['St', 'Ave', 'Blvd', 'Rd', 'Dr', 'Ln', 'Way', 'Pl', 'Ct', 'rue', 'avenue', 'boulevard'];
-    var cities = ['Paris', 'Lyon', 'Berlin', 'Munich', 'London', 'Manchester', 'Madrid', 'Barcelona', 'New York', 'Los Angeles',
-      'Chicago', 'Houston', 'Toronto', 'Montreal', 'Brussels', 'Amsterdam', 'Rome', 'Milan', 'Zurich', 'Vienna'];
-    var countries = ['France', 'Germany', 'United Kingdom', 'Spain', 'United States', 'Canada', 'Belgium', 'Netherlands', 'Italy', 'Switzerland', 'Austria'];
-    var num = (randomInt(9998) + 1).toString();
-    var streetName = streets[randomInt(streets.length)];
+    var parts1 = ['Oak', 'Maple', 'Cedar', 'Park', 'River', 'Lake', 'Hill', 'Elm', 'Pine', 'North', 'South', 'East', 'West', 'Green', 'Blue', 'Red', 'Spring', 'Stone', 'Mill', 'Valley', 'Forest', 'Bay', 'Rock', 'Sky', 'Sun', 'Moon', 'Star', 'Fair', 'Bright', 'Cold', 'Warm', 'Long', 'Short', 'New', 'Old', 'Grand', 'High', 'Low', 'Deep', 'Clear', 'Wild', 'Still', 'Swift', 'Bold', 'Calm', 'Dark', 'Main', 'Church', 'Market', 'State', 'Union', 'Central', 'Washington', 'Lincoln', 'Franklin', 'Madison', 'Jefferson', 'King', 'Queen', 'Prince', 'Royal', 'Garden', 'Orchard', 'Meadow', 'Brook', 'Creek', 'Ridge', 'View', 'Gate', 'Bridge', 'Lane', 'Port', 'Harbor', 'Cove'];
+    var parts2 = ['view', 'dale', 'hurst', 'wood', 'field', 'land', 'port', 'side', 'ton', 'ville', 'burg', 'ford', 'worth', 'brook', 'crest', 'ridge', 'mont', 'vale', 'haven', 'shire', 'gate', 'way', 'path', 'run', 'point', 'park', 'lake', 'hill', 'spring', 'well', 'stone', 'grove', 'acre', 'court', 'place', 'lane', 'street', 'road', 'drive', 'circle', 'plaza', 'square', 'heights', 'manor', 'estates', 'gardens', 'terrace', 'trail'];
+    var streetName = parts1[randomInt(parts1.length)] + parts2[randomInt(parts2.length)];
+    var types = ['St', 'Ave', 'Blvd', 'Rd', 'Dr', 'Ln', 'Way', 'Pl', 'Ct', 'Pkwy', 'Hwy', 'rue', 'avenue', 'boulevard', 'chemin', 'str'];
+    var cities = ['Paris', 'Lyon', 'Marseille', 'Toulouse', 'Berlin', 'Munich', 'Hamburg', 'London', 'Manchester', 'Birmingham', 'Madrid', 'Barcelona', 'Valencia', 'New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 'Toronto', 'Montreal', 'Vancouver', 'Brussels', 'Amsterdam', 'Rome', 'Milan', 'Zurich', 'Vienna', 'Prague', 'Warsaw', 'Stockholm', 'Oslo', 'Copenhagen', 'Dublin', 'Lisbon', 'Athens', 'Budapest', 'Bucharest', 'Sofia', 'Belgrade', 'Zagreb', 'Helsinki', 'Reykjavik', 'Sydney', 'Melbourne', 'Tokyo', 'Seoul', 'Singapore'];
+    var countries = ['France', 'Germany', 'United Kingdom', 'Spain', 'United States', 'Canada', 'Belgium', 'Netherlands', 'Italy', 'Switzerland', 'Austria', 'Portugal', 'Poland', 'Sweden', 'Norway', 'Denmark', 'Ireland', 'Greece', 'Czech Republic', 'Hungary', 'Romania', 'Croatia', 'Finland', 'Iceland', 'Australia', 'Japan'];
+    var num = (randomInt(99998) + 1).toString();
     var streetType = types[randomInt(types.length)];
     var city = cities[randomInt(cities.length)];
     var country = countries[randomInt(countries.length)];
@@ -338,11 +365,14 @@
   }
 
   function generateUsername() {
-    var adj = ['swift', 'brave', 'dark', 'wild', 'calm', 'bold', 'keen', 'wise', 'fair', 'warm',
-      'cool', 'pure', 'rare', 'vast', 'deep', 'free', 'true', 'rich', 'soft', 'pale'];
-    var nouns = ['fox', 'wolf', 'hawk', 'bear', 'lion', 'deer', 'crow', 'sage', 'reed', 'oak',
-      'star', 'moon', 'rain', 'wind', 'fire', 'wave', 'stone', 'peak', 'lake', 'dawn'];
-    return adj[randomInt(adj.length)] + '_' + nouns[randomInt(nouns.length)] + randomInt(999);
+    var charset = 'abcdefghijklmnopqrstuvwxyz0123456789_';
+    if (WORDS.length > 0) {
+      return WORDS[randomInt(WORDS.length)] + '_' + WORDS[randomInt(WORDS.length)] + randomInt(9999);
+    }
+    var len = randomInt(6) + 8;
+    var s = charset[randomInt(26)];
+    for (var i = 1; i < len; i++) s += charset[randomInt(charset.length)];
+    return s;
   }
 
   function generateSlug() {
@@ -356,16 +386,10 @@
   }
 
   function generateLorem() {
-    var words = [
-      'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit',
-      'sed', 'do', 'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna',
-      'aliqua', 'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco',
-      'laboris', 'nisi', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure',
-      'in', 'reprehenderit', 'voluptate', 'velit', 'esse', 'cillum', 'fugiat', 'nulla', 'pariatur',
-      'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt', 'culpa', 'qui',
-      'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum'
+    var words = WORDS.length > 0 ? WORDS : [
+      'lorem', 'ipsum', 'dolor', 'sit', 'amet', 'consectetur', 'adipiscing', 'elit', 'sed', 'do', 'eiusmod', 'tempor', 'incididunt', 'ut', 'labore', 'et', 'dolore', 'magna', 'aliqua', 'enim', 'ad', 'minim', 'veniam', 'quis', 'nostrud', 'exercitation', 'ullamco', 'laboris', 'nisi', 'aliquip', 'ex', 'ea', 'commodo', 'consequat', 'duis', 'aute', 'irure', 'in', 'reprehenderit', 'voluptate', 'velit', 'esse', 'cillum', 'fugiat', 'nulla', 'pariatur', 'excepteur', 'sint', 'occaecat', 'cupidatat', 'non', 'proident', 'sunt', 'culpa', 'qui', 'officia', 'deserunt', 'mollit', 'anim', 'id', 'est', 'laborum'
     ];
-    var len = randomInt(12) + 8;
+    var len = randomInt(15) + 10;
     var result = [];
     for (var i = 0; i < len; i++) {
       result.push(words[randomInt(words.length)]);
@@ -440,21 +464,57 @@
   }
 
   function generateRegex() {
+    var n = function (min, max) { return randomInt(max - min + 1) + min; };
     var patterns = [
       '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
       '^\\+?[1-9]\\d{1,14}$',
       '^#?([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$',
-      '^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,}$',
+      '^(?=.*[A-Za-z])(?=.*\\d)[A-Za-z\\d]{8,' + n(12, 24) + '}$',
       '^(https?:\\/\\/)?[\\w.-]+\\.[a-z]{2,}(\\/\\S*)?$',
       '^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$',
       '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
-      '^([01]?\\d\\d?|2[0-4]\\d|25[0-5])(\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])){3}$'
+      '^([01]?\\d\\d?|2[0-4]\\d|25[0-5])(\\.([01]?\\d\\d?|2[0-4]\\d|25[0-5])){3}$',
+      '^[a-zA-Z][a-zA-Z0-9_]{' + n(2, 10) + '}$',
+      '^\\d{' + n(4, 12) + '}$',
+      '^[a-z0-9-]{' + n(3, 20) + '}$',
+      '^[A-Z]{2}\\d{2}[A-Z0-9]{' + n(10, 25) + '}$',
+      '^[\\w-.]+@[\\w-]+\\.[a-z]{2,' + n(2, 6) + '}$',
+      '^[a-zA-Z\\s]{' + n(2, 30) + '}$',
+      '^[0-9a-fA-F]{' + n(16, 64) + '}$',
+      '^(0x)?[0-9a-fA-F]{' + n(40, 64) + '}$',
+      '^[1-9]\\d{0,' + n(5, 9) + '}$',
+      '^[a-zA-Z0-9+/]{' + n(20, 50) + '}=*$',
+      '^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$',
+      '^[a-fA-F0-9]{2}(:[a-fA-F0-9]{2}){5}$',
+      '^\\+[1-9]\\d{0,3}\\s?\\d{1,14}$',
+      '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{' + n(8, 20) + '}$',
+      '^[a-z]+(-[a-z]+)*$',
+      '^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}',
+      '^[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}-[A-Z0-9]{4}$',
+      '^0x[0-9a-fA-F]{' + n(40, 42) + '}$',
+      '^\\[\\d+(,\\d+)*\\]$',
+      '^\\d{1,2}/\\d{1,2}/\\d{2,4}$',
+      '^(\\d{1,2}:)?(\\d{1,2}:)?\\d{1,2}$',
+      '^[A-Z]{2}\\d{2}[A-Z0-9]{4,30}$',
+      '^[\\u0020-\\u007E]{' + n(1, 50) + '}$',
+      '^\\d{3}-\\d{3}-\\d{4}$',
+      '^[a-zA-Z0-9_-]{' + n(8, 32) + '}$',
+      '^[\\d\\s+-()]{10,20}$',
+      '^[^@]+@[^@]+\\.[a-z]{2,}$',
+      '^(https?|ftp)://[^\\s/$.?#].[^\\s]*$',
+      '^[a-zA-Z]\\w*$',
+      '^\\d{1,5}$',
+      '^-?\\d{1,10}(\\.\\d{1,6})?$',
+      '^[01]+$',
+      '^(true|false)$',
+      '^[^\\s]{' + n(1, 256) + '}$',
+      '^[\\x20-\\x7E]{' + n(8, 128) + '}$'
     ];
     return patterns[randomInt(patterns.length)];
   }
 
   function generateHash() {
-    return 'sha256:' + bytesToHex(randomBytes(32));
+    return bytesToHex(randomBytes(32));
   }
 
   function generateFlaskSecret() {
@@ -489,52 +549,64 @@
 
   // --- Card definitions ---
 
+  var CATEGORIES = [
+    { id: 'secrets', label: 'Secrets' },
+    { id: 'ids', label: 'IDs' },
+    { id: 'colors', label: 'Colors' },
+    { id: 'network', label: 'Network' },
+    { id: 'testdata', label: 'Test Data' },
+    { id: 'text', label: 'Text' },
+    { id: 'numbers', label: 'Numbers' },
+    { id: 'development', label: 'Development' },
+    { id: 'crypto', label: 'Crypto' }
+  ];
+
   var CARDS = [
-    { id: 'password', label: 'Password' },
-    { id: 'passphrase', label: 'Passphrase' },
-    { id: 'pin', label: 'PIN Code' },
-    { id: 'totp', label: 'TOTP Secret' },
-    { id: 'uuid', label: 'UUID v4' },
-    { id: 'ulid', label: 'ULID' },
-    { id: 'nanoid', label: 'NanoID' },
-    { id: 'objectid', label: 'MongoDB ObjectId' },
-    { id: 'githash', label: 'Git Commit Hash' },
-    { id: 'apikey', label: 'API Key' },
-    { id: 'jwt', label: 'JWT Token' },
-    { id: 'license', label: 'License Key' },
-    { id: 'hexcolor', label: 'Hex Color', swatch: true },
-    { id: 'rgb', label: 'RGB Color', swatch: true },
-    { id: 'hsl', label: 'HSL Color', swatch: true },
-    { id: 'mac', label: 'MAC Address' },
-    { id: 'ipv4', label: 'IPv4 Address' },
-    { id: 'ipv6', label: 'IPv6 Address' },
-    { id: 'port', label: 'Port Number' },
-    { id: 'cidr', label: 'CIDR Block' },
-    { id: 'useragent', label: 'User Agent' },
-    { id: 'creditcard', label: 'Credit Card' },
-    { id: 'iban', label: 'IBAN' },
-    { id: 'phone', label: 'Phone Number' },
-    { id: 'email', label: 'Email Address' },
-    { id: 'address', label: 'Address' },
-    { id: 'username', label: 'Username' },
-    { id: 'slug', label: 'URL Slug' },
-    { id: 'lorem', label: 'Lorem Ipsum' },
-    { id: 'coords', label: 'GPS Coordinates' },
-    { id: 'number', label: 'Random Number' },
-    { id: 'date', label: 'Random Date' },
-    { id: 'timestamp', label: 'Unix Timestamp' },
-    { id: 'cron', label: 'CRON Expression' },
-    { id: 'regex', label: 'Regex Pattern' },
-    { id: 'hash', label: 'SHA-256 Hash' },
-    { id: 'flasksecret', label: 'Flask Secret Key' },
-    { id: 'djangosecret', label: 'Django Secret Key' },
-    { id: 'nonce', label: 'CSP Nonce' },
-    { id: 'oauthstate', label: 'OAuth State' },
-    { id: 'slugid', label: 'Short Slug ID' },
-    { id: 'base64', label: 'Base64 String' },
-    { id: 'hex', label: 'Hex String' },
-    { id: 'btc', label: 'Bitcoin Address' },
-    { id: 'eth', label: 'Ethereum Address' }
+    { id: 'password', label: 'Password', category: 'secrets' },
+    { id: 'passphrase', label: 'Passphrase', category: 'secrets' },
+    { id: 'pin', label: 'PIN Code', category: 'secrets' },
+    { id: 'totp', label: 'TOTP Secret', category: 'secrets' },
+    { id: 'apikey', label: 'API Key', category: 'secrets' },
+    { id: 'jwt', label: 'JWT Token', category: 'secrets' },
+    { id: 'license', label: 'License Key', category: 'secrets' },
+    { id: 'flasksecret', label: 'Flask Secret Key', category: 'secrets' },
+    { id: 'djangosecret', label: 'Django Secret Key', category: 'secrets' },
+    { id: 'nonce', label: 'CSP Nonce', category: 'secrets' },
+    { id: 'oauthstate', label: 'OAuth State', category: 'secrets' },
+    { id: 'uuid', label: 'UUID v4', category: 'ids' },
+    { id: 'ulid', label: 'ULID', category: 'ids' },
+    { id: 'nanoid', label: 'NanoID', category: 'ids' },
+    { id: 'objectid', label: 'MongoDB ObjectId', category: 'ids' },
+    { id: 'githash', label: 'Git Commit Hash', category: 'ids' },
+    { id: 'slugid', label: 'Short Slug ID', category: 'ids' },
+    { id: 'hexcolor', label: 'Hex Color', category: 'colors', swatch: true },
+    { id: 'rgb', label: 'RGB Color', category: 'colors', swatch: true },
+    { id: 'hsl', label: 'HSL Color', category: 'colors', swatch: true },
+    { id: 'mac', label: 'MAC Address', category: 'network' },
+    { id: 'ipv4', label: 'IPv4 Address', category: 'network' },
+    { id: 'ipv6', label: 'IPv6 Address', category: 'network' },
+    { id: 'port', label: 'Port Number', category: 'network' },
+    { id: 'cidr', label: 'CIDR Block', category: 'network' },
+    { id: 'useragent', label: 'User Agent', category: 'testdata' },
+    { id: 'creditcard', label: 'Credit Card', category: 'testdata' },
+    { id: 'iban', label: 'IBAN', category: 'testdata' },
+    { id: 'phone', label: 'Phone Number', category: 'testdata' },
+    { id: 'email', label: 'Email Address', category: 'testdata' },
+    { id: 'address', label: 'Address', category: 'testdata' },
+    { id: 'username', label: 'Username', category: 'testdata' },
+    { id: 'slug', label: 'URL Slug', category: 'text' },
+    { id: 'lorem', label: 'Lorem Ipsum', category: 'text' },
+    { id: 'regex', label: 'Regex Pattern', category: 'text' },
+    { id: 'coords', label: 'GPS Coordinates', category: 'numbers' },
+    { id: 'number', label: 'Random Number', category: 'numbers' },
+    { id: 'date', label: 'Random Date', category: 'numbers' },
+    { id: 'timestamp', label: 'Unix Timestamp', category: 'numbers' },
+    { id: 'cron', label: 'CRON Expression', category: 'development' },
+    { id: 'hash', label: 'SHA-256 Hash', category: 'development' },
+    { id: 'base64', label: 'Base64 String', category: 'development' },
+    { id: 'hex', label: 'Hex String', category: 'development' },
+    { id: 'btc', label: 'Bitcoin Address', category: 'crypto' },
+    { id: 'eth', label: 'Ethereum Address', category: 'crypto' }
   ];
 
   // --- Generator registry ---
@@ -600,33 +672,74 @@
   // --- Build cards ---
 
   function buildCards() {
-    var grid = document.getElementById('grid');
-    for (var i = 0; i < CARDS.length; i++) {
-      var def = CARDS[i];
-      var card = document.createElement('div');
-      card.className = 'card';
-      card.setAttribute('data-generator', def.id);
+    var main = document.getElementById('main');
+    main.innerHTML = '';
 
-      var valueHTML = def.swatch
-        ? '<div class="card-value-row"><span class="color-swatch"></span><span class="card-value"></span></div>'
-        : '<div class="card-value"></div>';
+    for (var c = 0; c < CATEGORIES.length; c++) {
+      var cat = CATEGORIES[c];
+      var cardsInCat = CARDS.filter(function (d) { return d.category === cat.id; });
+      if (cardsInCat.length === 0) continue;
 
-      card.innerHTML =
-        '<div class="card-header">' +
-          '<span class="card-label">' + def.label + '</span>' +
-          '<div class="card-actions">' +
-            '<button class="btn-icon btn-copy" title="Copy" aria-label="Copy to clipboard">' +
-              ICON_COPY +
-              '<span class="copied-tooltip">Copied!</span>' +
-            '</button>' +
-            '<button class="btn-icon btn-regen" title="Regenerate" aria-label="Regenerate">' +
-              ICON_REGEN +
-            '</button>' +
+      var section = document.createElement('section');
+      section.className = 'category-section';
+      section.setAttribute('data-category', cat.id);
+
+      var heading = document.createElement('h2');
+      heading.className = 'category-heading';
+      heading.textContent = cat.label;
+      section.appendChild(heading);
+
+      var grid = document.createElement('div');
+      grid.className = 'grid';
+
+      for (var i = 0; i < cardsInCat.length; i++) {
+        var def = cardsInCat[i];
+        var card = document.createElement('div');
+        card.className = 'card';
+        card.setAttribute('data-generator', def.id);
+        card.setAttribute('data-label', def.label.toLowerCase());
+
+        var valueHTML = def.swatch
+          ? '<div class="card-value-row"><span class="color-swatch"></span><span class="card-value"></span></div>'
+          : '<div class="card-value"></div>';
+
+        card.innerHTML =
+          '<div class="card-header">' +
+            '<span class="card-label">' + def.label + '</span>' +
+            '<div class="card-actions">' +
+              '<button class="btn-icon btn-copy" title="Copy" aria-label="Copy to clipboard">' +
+                ICON_COPY +
+                '<span class="copied-tooltip">Copied!</span>' +
+              '</button>' +
+              '<button class="btn-icon btn-regen" title="Regenerate" aria-label="Regenerate">' +
+                ICON_REGEN +
+              '</button>' +
+            '</div>' +
           '</div>' +
-        '</div>' +
-        valueHTML;
+          valueHTML;
 
-      grid.appendChild(card);
+        grid.appendChild(card);
+      }
+
+      section.appendChild(grid);
+      main.appendChild(section);
+    }
+  }
+
+  function filterCards(query) {
+    var q = (query || '').trim().toLowerCase();
+    var sections = document.querySelectorAll('.category-section');
+    for (var i = 0; i < sections.length; i++) {
+      var section = sections[i];
+      var cards = section.querySelectorAll('.card');
+      var visibleCount = 0;
+      for (var j = 0; j < cards.length; j++) {
+        var card = cards[j];
+        var match = !q || card.getAttribute('data-label').indexOf(q) !== -1;
+        card.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
+      }
+      section.style.display = visibleCount > 0 ? '' : 'none';
     }
   }
 
@@ -679,7 +792,7 @@
       regenerateAll();
     });
 
-    document.getElementById('grid').addEventListener('click', function (e) {
+    document.getElementById('main').addEventListener('click', function (e) {
       var copyBtn = e.target.closest('.btn-copy');
       if (copyBtn) {
         copyValue(copyBtn.closest('.card'));
@@ -692,6 +805,24 @@
       }
     });
 
+    document.getElementById('search').addEventListener('input', function () {
+      filterCards(this.value);
+    });
+
     document.getElementById('regen-all').addEventListener('click', regenerateAll);
+
+    (function initTheme() {
+      var stored = localStorage.getItem('randkit-theme');
+      var preferDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var dark = stored === 'dark' || (stored !== 'light' && preferDark);
+      document.documentElement.classList.toggle('dark', dark);
+      document.getElementById('theme-toggle').setAttribute('aria-pressed', dark);
+    })();
+
+    document.getElementById('theme-toggle').addEventListener('click', function () {
+      var dark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('randkit-theme', dark ? 'dark' : 'light');
+      this.setAttribute('aria-pressed', dark);
+    });
   });
 })();
